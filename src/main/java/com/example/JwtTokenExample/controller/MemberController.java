@@ -36,8 +36,8 @@ public class MemberController {
         return new ResponseEntity<ReadUserInfoDto>(memberService.readUserInfoDto(), HttpStatus.OK);
     }
 
-    @GetMapping(value = "/auth/member/{memberId}")
-    public ResponseEntity<UserSearchDto> readUserInfoDtoResponseEntity(@PathVariable Long memberId) {
+    @GetMapping(value = "/auth/search/{memberId}")
+    public ResponseEntity<UserSearchDto> userSearchDtoResponseEntity(@PathVariable Long memberId) {
         return new ResponseEntity<UserSearchDto>(memberService.userSearchDto(memberId), HttpStatus.OK);
     }
 

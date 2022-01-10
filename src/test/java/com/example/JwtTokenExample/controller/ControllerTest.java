@@ -7,53 +7,42 @@ import com.example.JwtTokenExample.dto.LoginUserDto;
 import com.example.JwtTokenExample.dto.SignUpUserDto;
 import com.example.JwtTokenExample.entity.Member;
 import com.example.JwtTokenExample.repository.MemberRepository;
-import com.example.JwtTokenExample.service.MemberService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.TestExecutionEvent;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.context.event.annotation.BeforeTestMethod;
-import org.springframework.test.context.transaction.AfterTransaction;
 import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.Optional;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.internal.bytebuddy.matcher.ElementMatchers.is;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ControllerTest {
 
-    private static final String EMAIL = "email@abc.com";
-    private static final String NAME = "name";
-    private static final String PASSWORD = "password";
+    private static final String EMAIL = "guest_email@abc.com";
+    private static final String NAME = "gName";
+    private static final String PASSWORD = "guest_password";
     private static final Role guest = Role.GUEST;
-    private static final Role user = Role.GUEST;
-    private static final String UPDATE_EMAIL = "update_email@abc.com";
-    private static final String UPDATE_NAME = "uName";
-    private static final String UPDATE_PASSWORD = "update_password";
+    private static final Role user = Role.USER;
+    private static final String USER_EMAIL = "user_email@abc.com";
+    private static final String USER_NAME = "uName";
+    private static final String USER_PASSWORD = "user_password";
     private static final String URL = "/api/v1/member/";
     private static String TOKEN = "";
 
@@ -67,34 +56,59 @@ public class ControllerTest {
     private MemberRepository memberRepository;
 
     @Autowired
-    private JwtTokenProvider provider;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
-    PasswordEncoder passwordEncoder;
+    private MemberController memberController;
 
-    @AfterEach
+    @Autowired
+    private JwtTokenProvider provider;
+
+    @BeforeTransaction
+    public void clearSecurity(){
+        SecurityContextHolder.clearContext();
+    }
+
+    @BeforeAll
+    public void settingMvcBuilder(){
+        mvc = MockMvcBuilders
+                .standaloneSetup(memberController)
+                .addFilter(new CharacterEncodingFilter("utf-8", true))
+                .build();
+    }
+
     public void deleteAll(){
         memberRepository.deleteAll();
     }
 
-    @BeforeEach
+    @BeforeAll
     public void initUser(){
+        String initPassword = passwordEncoder.encode(USER_PASSWORD);
+        Member member = Member.builder()
+                .email(USER_EMAIL)
+                .name(USER_NAME)
+                .password(initPassword)
+                .role(user).build();
+        memberRepository.save(member);
+    }
+
+    @BeforeAll
+    public void initGuest(){
         String initPassword = passwordEncoder.encode(PASSWORD);
         Member member = Member.builder()
                 .email(EMAIL)
                 .name(NAME)
                 .password(initPassword)
-                .role(user).build();
+                .role(guest).build();
         memberRepository.save(member);
     }
 
     @Test
     @DisplayName("게스트 권한 회원가입 테스트")
     public void signUpControllerTest()throws Exception{
-        deleteAll();
 
         //given
-        String content = objectMapper.writeValueAsString(new SignUpUserDto(EMAIL, PASSWORD, NAME, guest));
+        String content = objectMapper.writeValueAsString(new SignUpUserDto("G"+EMAIL, PASSWORD, NAME, guest));
 
         //when
         MvcResult result = mvc.perform(
@@ -105,7 +119,7 @@ public class ControllerTest {
                 )
                 //then
                 .andExpect(MockMvcResultMatchers.status().isCreated())
-//                .andDo(print())
+                .andDo(print())
                 .andReturn();
         assertThat(result.getResponse().getContentAsString()).isNotNull();
     }
@@ -115,7 +129,7 @@ public class ControllerTest {
     public void signUpUserControllerTest() throws Exception{
 
         //given
-        String content = objectMapper.writeValueAsString(new SignUpUserDto(UPDATE_EMAIL,PASSWORD,NAME,user));
+        String content = objectMapper.writeValueAsString(new SignUpUserDto("U"+USER_EMAIL,USER_PASSWORD,USER_NAME,user));
 
         //when
         MvcResult result = mvc.perform(
@@ -158,17 +172,18 @@ public class ControllerTest {
     }
 
     @Test
+    //given
+    @WithUserDetails(USER_EMAIL)
     @DisplayName("회원 정보 조회")
+    @Order(1)
     public void myPageControllerTest() throws Exception{
-
 
         //when
         MvcResult result = mvc.perform(
-                MockMvcRequestBuilders.get(URL + "auth/my-page")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-AUTH-TOKEN",TOKEN)
-                        .accept(MediaType.APPLICATION_JSON)
-        )
+                        MockMvcRequestBuilders.get(URL + "auth/my-page")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
                 //then
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andDo(print())
