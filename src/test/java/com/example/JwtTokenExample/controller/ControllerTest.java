@@ -65,24 +65,24 @@ public class ControllerTest {
     private JwtTokenProvider provider;
 
     @BeforeTransaction
-    public void clearSecurity(){
+    public void clearSecurity() {
         SecurityContextHolder.clearContext();
     }
 
     @BeforeAll
-    public void settingMvcBuilder(){
+    public void settingMvcBuilder() {
         mvc = MockMvcBuilders
                 .standaloneSetup(memberController)
                 .addFilter(new CharacterEncodingFilter("utf-8", true))
                 .build();
     }
 
-    public void deleteAll(){
+    public void deleteAll() {
         memberRepository.deleteAll();
     }
 
     @BeforeAll
-    public void initUser(){
+    public void initUser() {
         String initPassword = passwordEncoder.encode(USER_PASSWORD);
         Member member = Member.builder()
                 .email(USER_EMAIL)
@@ -93,7 +93,7 @@ public class ControllerTest {
     }
 
     @BeforeAll
-    public void initGuest(){
+    public void initGuest() {
         String initPassword = passwordEncoder.encode(PASSWORD);
         Member member = Member.builder()
                 .email(EMAIL)
@@ -105,14 +105,14 @@ public class ControllerTest {
 
     @Test
     @DisplayName("게스트 권한 회원가입 테스트")
-    public void signUpControllerTest()throws Exception{
+    public void signUpControllerTest() throws Exception {
 
         //given
-        String content = objectMapper.writeValueAsString(new SignUpUserDto("G"+EMAIL, PASSWORD, NAME, guest));
+        String content = objectMapper.writeValueAsString(new SignUpUserDto("G" + EMAIL, PASSWORD, NAME, guest));
 
         //when
         MvcResult result = mvc.perform(
-                        MockMvcRequestBuilders.post(URL+"sign-up")
+                        MockMvcRequestBuilders.post(URL + "sign-up")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(content)
                                 .accept(MediaType.APPLICATION_JSON)
@@ -126,18 +126,18 @@ public class ControllerTest {
 
     @Test
     @DisplayName("유저 권한 회원가입 테스트")
-    public void signUpUserControllerTest() throws Exception{
+    public void signUpUserControllerTest() throws Exception {
 
         //given
-        String content = objectMapper.writeValueAsString(new SignUpUserDto("U"+USER_EMAIL,USER_PASSWORD,USER_NAME,user));
+        String content = objectMapper.writeValueAsString(new SignUpUserDto("U" + USER_EMAIL, USER_PASSWORD, USER_NAME, user));
 
         //when
         MvcResult result = mvc.perform(
-                MockMvcRequestBuilders.post(URL+"sign-up")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(content)
-                        .accept(MediaType.APPLICATION_JSON)
-        )
+                        MockMvcRequestBuilders.post(URL + "sign-up")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(content)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
                 //then
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andDo(print())
@@ -149,18 +149,18 @@ public class ControllerTest {
 
     @Test
     @DisplayName("유저 로그인 테스트")
-    public void loginUserControllerTest() throws Exception{
+    public void loginUserControllerTest() throws Exception {
 
         //given
-        String content = objectMapper.writeValueAsString(new LoginUserDto(EMAIL,PASSWORD));
+        String content = objectMapper.writeValueAsString(new LoginUserDto(EMAIL, PASSWORD));
 
         //when
         MvcResult result = mvc.perform(
-                MockMvcRequestBuilders.post(URL+"login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(content)
-                        .accept(MediaType.APPLICATION_JSON)
-        )
+                        MockMvcRequestBuilders.post(URL + "login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(content)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
                 //then
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andDo(print())
@@ -173,10 +173,9 @@ public class ControllerTest {
 
     @Test
     //given
-    @WithUserDetails(USER_EMAIL)
+    @WithUserDetails(EMAIL)
     @DisplayName("회원 정보 조회")
-    @Order(1)
-    public void myPageControllerTest() throws Exception{
+    public void myPageControllerTest() throws Exception {
 
         //when
         MvcResult result = mvc.perform(
@@ -189,6 +188,48 @@ public class ControllerTest {
                 .andDo(print())
                 .andReturn();
         assertThat(result.getResponse()).isNotNull();
+    }
+
+    @Test
+    @WithUserDetails(USER_EMAIL)
+    @DisplayName("유저 검색 성공 테스트")
+    public void userSearchControllerTest() throws Exception {
+
+        Long memberId = memberRepository.findByEmail(EMAIL).get().getMemberId();
+
+        //when
+        MvcResult result = mvc.perform(
+                        MockMvcRequestBuilders.get(URL + "auth/search/" + memberId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                //then
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(print())
+                .andReturn();
+        assertThat(result.getResponse()).isNotNull();
+        System.out.println(result.getResponse().getContentAsString());
+    }
+
+    @Test
+    @WithUserDetails(EMAIL)
+    @DisplayName("유저 검색 실패 테스트")
+    public void userSearchControllerFailTest() throws Exception {
+
+        Long memberId = memberRepository.findByEmail(USER_EMAIL).get().getMemberId();
+
+        //when
+        MvcResult result = mvc.perform(
+                        MockMvcRequestBuilders.get(URL + "auth/search/" + memberId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                //then
+                .andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andDo(print())
+                .andReturn();
+        assertThat(result.getResponse()).isNotNull();
+        System.out.println(result.getResponse().getContentAsString());
     }
 
 }

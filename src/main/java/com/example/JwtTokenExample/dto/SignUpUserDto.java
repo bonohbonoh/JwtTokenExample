@@ -5,6 +5,7 @@ import com.example.JwtTokenExample.entity.Member;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
@@ -13,6 +14,7 @@ import javax.validation.constraints.Size;
 
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class SignUpUserDto {
 
     @NotEmpty(message = "email을 입력하세요")

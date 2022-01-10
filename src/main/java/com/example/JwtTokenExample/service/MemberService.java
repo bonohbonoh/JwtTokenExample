@@ -6,6 +6,7 @@ import com.example.JwtTokenExample.dto.ReadUserInfoDto;
 import com.example.JwtTokenExample.dto.SignUpUserDto;
 import com.example.JwtTokenExample.dto.UserSearchDto;
 import com.example.JwtTokenExample.entity.Member;
+import com.example.JwtTokenExample.exception.RoleUnderprivilegedException;
 import com.example.JwtTokenExample.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +65,7 @@ public class MemberService {
         Member searchedMember = memberRepository.findByMemberId(memberId).orElseThrow(() -> new RuntimeException("존재하지 않는 회원입니다."));
         Member searchingMember = memberRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("인증되지 않은 회원입니다."));
         if (getMemberGrade(searchingMember) < getMemberGrade(searchedMember)) {
-            throw new RuntimeException("조회할 권한이 없습니다.");
+            throw new RoleUnderprivilegedException("조회할 권한이 없습니다.");
         }
         return new UserSearchDto(searchedMember.getEmail(), searchedMember.getName());
     }
