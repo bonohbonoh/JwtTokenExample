@@ -44,7 +44,6 @@ public class ControllerTest {
     private static final String USER_NAME = "uName";
     private static final String USER_PASSWORD = "user_password";
     private static final String URL = "/api/v1/member/";
-    private static String TOKEN = "";
 
     @Autowired
     private MockMvc mvc;
@@ -167,8 +166,8 @@ public class ControllerTest {
                 .andReturn();
 
         //then
-        TOKEN = result.getResponse().getContentAsString();
-        assertThat(provider.validateToken(TOKEN)).isTrue();
+        String token = result.getResponse().getContentAsString();
+        assertThat(provider.validateToken(token)).isTrue();
     }
 
     @Test
@@ -208,7 +207,6 @@ public class ControllerTest {
                 .andDo(print())
                 .andReturn();
         assertThat(result.getResponse()).isNotNull();
-        System.out.println(result.getResponse().getContentAsString());
     }
 
     @Test
@@ -229,7 +227,6 @@ public class ControllerTest {
                 .andDo(print())
                 .andReturn();
         assertThat(result.getResponse()).isNotNull();
-        System.out.println(result.getResponse().getContentAsString());
     }
 
 }
