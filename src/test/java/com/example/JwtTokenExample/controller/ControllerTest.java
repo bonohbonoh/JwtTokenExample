@@ -226,7 +226,7 @@ public class ControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isForbidden())
                 .andDo(print())
                 .andReturn();
-        assertThat(result.getResponse()).isNotNull();
+        assertThat(result.getResponse().getStatus()).isEqualTo(403);
     }
 
 }

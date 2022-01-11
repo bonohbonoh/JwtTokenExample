@@ -10,7 +10,6 @@ import javax.persistence.*;
 @Entity
 @NoArgsConstructor
 @Getter
-
 public class Member {
 
     @Id
@@ -28,6 +27,14 @@ public class Member {
 
     @Column(nullable = false, length = 10)
     private Role role;
+
+    public void updatePassword(String password){
+        this.password = password;
+    }
+
+    public void updateName(String name){
+        this.name = name;
+    }
 
     @Builder
     public Member(String email, String password, String name, Role role) {

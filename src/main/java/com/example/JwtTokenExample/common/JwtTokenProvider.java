@@ -55,11 +55,6 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token).getBody().getSubject();
     }
 
-    public String getUserRole(String token) {
-        return Jwts.parser().setSigningKey(key)
-                .parseClaimsJws(token).getBody().get("ROLE").toString();
-    }
-
     public String resolveToken(HttpServletRequest req) {
         return req.getHeader("X-AUTH-TOKEN");
     }
