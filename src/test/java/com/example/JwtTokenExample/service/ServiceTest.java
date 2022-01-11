@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,11 +68,11 @@ public class ServiceTest {
     }
 
     @Test
-    public void signUpServiceTest(){
+    public void signUpServiceTest() {
         memberRepository.deleteAll();
 
         //given
-        SignUpUserDto dto = new SignUpUserDto(EMAIL, PASSWORD,NAME, Role.USER);
+        SignUpUserDto dto = new SignUpUserDto(EMAIL, PASSWORD, NAME, Role.USER);
 
         //when
         Long memberId = memberService.signUpUser(dto);
@@ -84,10 +82,10 @@ public class ServiceTest {
     }
 
     @Test
-    public void loginServiceTest(){
+    public void loginServiceTest() {
 
         //given
-        LoginUserDto dto = new LoginUserDto(EMAIL,PASSWORD);
+        LoginUserDto dto = new LoginUserDto(EMAIL, PASSWORD);
 
         //when
         String token = memberService.loginUser(dto);
@@ -99,7 +97,7 @@ public class ServiceTest {
     @Test
     //given
     @WithUserDetails(USER_EMAIL)
-    public void readUserServiceTest(){
+    public void readUserServiceTest() {
 
         //when
         ReadUserInfoDto dto = memberService.readUserInfoDto();
@@ -112,7 +110,7 @@ public class ServiceTest {
 
     @Test
     @WithUserDetails(USER_EMAIL)
-    public void searchUserServiceTest(){
+    public void searchUserServiceTest() {
 
         //given
         Long searchedMemberId = memberRepository.findByEmail(EMAIL).orElseThrow(() -> new RuntimeException("존재하지 않는 사용자 입니다.")).getMemberId();
@@ -127,7 +125,7 @@ public class ServiceTest {
 
     @Test
     @WithUserDetails(EMAIL)
-    public void searchUserFailServiceTest(){
+    public void searchUserFailServiceTest() {
 
         //given
         Long searchedMemberId = memberRepository.findByEmail(USER_EMAIL).orElseThrow(() -> new RuntimeException("존재하지 않는 사용자 입니다.")).getMemberId();
